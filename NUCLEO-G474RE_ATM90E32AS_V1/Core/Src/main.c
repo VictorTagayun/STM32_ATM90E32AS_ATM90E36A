@@ -23,7 +23,6 @@
 /* USER CODE BEGIN Includes */
 
 #include <stdio.h>
-#include "VT_ATM90E32AS.h"
 
 /* USER CODE END Includes */
 
@@ -34,6 +33,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define ATM90E3XA_read   0x80
+#define ATM90E3XA_write  0x0
 
 /* USER CODE END PD */
 
@@ -63,7 +65,8 @@ static void MX_LPUART1_UART_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
 
-void VT_Print_Read_ATM90E32AS_address(uint8_t address);
+void VT_Print_Read_ATM90E3XA_address(uint16_t address);
+void VT_Print_Write_ATM90E3XA_address(uint16_t address, uint16_t data);
 
 /* USER CODE END PFP */
 
@@ -108,19 +111,62 @@ int main(void)
 	printf("================================================\n");
 	printf("Starting >> NUCLEO-G474RE_ATM90E32AS_V1 \n");
 
-	printf("Reset ATM90E32AS..... \n");
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, RESET);
-	HAL_Delay(1);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, SET);
-	HAL_Delay(1);
+	for(uint16_t address = 0x00; address < (0x2f + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
 
-	VT_Print_Read_ATM90E32AS_address(2);
+	for(uint16_t address = 0x31; address < (0x3a + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
 
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, RESET);
+	for(uint16_t address = 0x41; address < (0x4c + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0x51; address < (0x56 + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0x51; address < (0x6c + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0x70; address < (0x7f + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0x80; address < (0x93 + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0xa0; address < (0xaf + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0xb0; address < (0xcb + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0xd0; address < (0xef + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0xf1; address < (0xff + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	for(uint16_t address = 0x201; address < (0x209 + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	VT_Print_Read_ATM90E3XA_address(0x216);
+
+	VT_Print_Read_ATM90E3XA_address(0x219);
+
+	VT_Print_Read_ATM90E3XA_address(0x2ff);
+
+	for(uint16_t address = 0xa; address < (0xd + 1); address++)
+		VT_Print_Write_ATM90E3XA_address(address, 0x1111);
+
+	for(uint16_t address = 8; address < (0xd + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
+
+	printf("Software Reset ATM90E32AS ......... \n");
+	VT_Print_Write_ATM90E3XA_address(0x70, 0x789a);
+
+	for(uint16_t address = 8; address < (0xd + 1); address++)
+		VT_Print_Read_ATM90E3XA_address(address);
 
 	printf("Ending   >> NUCLEO-G474RE_ATM90E32AS_V1 \n");
-	printf("================================================\n");
+
 
   /* USER CODE END 2 */
 
@@ -251,7 +297,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
-  hspi2.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -310,7 +356,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -325,12 +371,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  /*Configure GPIO pin : PB12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
@@ -342,14 +388,16 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void VT_Print_Read_ATM90E32AS_address(uint8_t address)
+void VT_Print_Read_ATM90E3XA_address(uint16_t address)
 {
 	SPI_TXRX_stat = 0;
-	uint8_t ATM90E32AS_TX[4] = {0,0,0,0}, ATM90E32AS_RX[4] = {0,0,0,0};
+	uint8_t ATM90E3XA_TX[4] = {0,0,0,0}, ATM90E3XA_RX[4] = {0,0,0,0};
 
-	ATM90E32AS_TX[0] = ATM90E32AS_read;
-	ATM90E32AS_TX[1] = address;
-	switch (HAL_SPI_TransmitReceive_DMA(&hspi2, ATM90E32AS_TX, ATM90E32AS_RX, 4))
+	ATM90E3XA_TX[0] = ATM90E3XA_read + (uint8_t) (address >> 8);
+	ATM90E3XA_TX[1] = (uint8_t) address;
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
+	switch (HAL_SPI_TransmitReceive_DMA(&hspi2, ATM90E3XA_TX, ATM90E3XA_RX, 4))
 	{
 	case HAL_OK: 	  /* Communication is completed ___________________________________________ */
 		break;
@@ -364,17 +412,40 @@ void VT_Print_Read_ATM90E32AS_address(uint8_t address)
 	}
 
 	while(!SPI_TXRX_stat){}
-//	printf("Read  Address = %x | ", address);
-//	printf("ATM90E32AS data = x%04x \n", ((ATM90E32AS_RX[3] << 8) + ATM90E32AS_RX[4]));
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+	printf("Read  Address %X%02Xh = %02X%02Xh \n", (ATM90E3XA_TX[0] & 0x7f), ATM90E3XA_TX[1],ATM90E3XA_RX[2],ATM90E3XA_RX[3]);
 
-	for (uint8_t cntr = 0; cntr < 4; cntr++)
+}
+
+void VT_Print_Write_ATM90E3XA_address(uint16_t address, uint16_t data)
+{
+	SPI_TXRX_stat = 0;
+	uint8_t ATM90E3XA_TX[4] = {0,0,0,0}, ATM90E3XA_RX[4] = {0,0,0,0};
+
+	ATM90E3XA_TX[0] = (uint8_t) (address >> 8);
+	ATM90E3XA_TX[1] = (uint8_t) address;
+	ATM90E3XA_TX[2] = (uint8_t) (data >> 8);
+	ATM90E3XA_TX[3] = (uint8_t) data;
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
+	switch (HAL_SPI_TransmitReceive_DMA(&hspi2, ATM90E3XA_TX, ATM90E3XA_RX, 4))
 	{
-		printf("TX[x%02x] = x%02x \n", cntr, ATM90E32AS_TX[cntr]);
+	case HAL_OK: 	  /* Communication is completed ___________________________________________ */
+		break;
+	case HAL_TIMEOUT: /* An Error Occur ______________________________________________________ */
+		printf("SPI HAL_TIMEOUT \n");
+	case HAL_ERROR:   /* Call Timeout Handler */
+		printf("SPI HAL_ERROR \n");
+		Error_Handler();
+		break;
+	default:
+		break;
 	}
-	for (uint8_t cntr = 0; cntr < 4; cntr++)
-	{
-		printf("RX[x%02x] = x%02x \n", cntr, ATM90E32AS_RX[cntr]);
-	}
+
+	while(!SPI_TXRX_stat){}
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+	printf("Write Address %X%02Xh = %02X%02Xh \n", (ATM90E3XA_TX[0]), ATM90E3XA_TX[1],ATM90E3XA_TX[2],ATM90E3XA_TX[3]);
+
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
